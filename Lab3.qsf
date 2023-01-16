@@ -57,7 +57,6 @@ set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_location_assignment PIN_P11 -to clk
 set_location_assignment PIN_B8 -to reset
-set_location_assignment PIN_A7 -to push_b
 set_location_assignment PIN_V12 -to GSENSOR_SDO
 set_location_assignment PIN_AB15 -to i2c_SCL
 set_location_assignment PIN_V11 -to i2c_SDA
@@ -110,4 +109,5 @@ set_location_assignment PIN_M20 -to output_seg[44]
 set_location_assignment PIN_N19 -to output_seg[45]
 set_location_assignment PIN_N20 -to output_seg[46]
 set_location_assignment PIN_L19 -to output_seg[47]
+set_location_assignment PIN_A7 -to button
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
