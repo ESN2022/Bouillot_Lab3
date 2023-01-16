@@ -29,30 +29,34 @@ enum axis { X_axis, Y_axis, Z_axis};
 float g_range_settings = 2*9.81;  			//By default, the range is + or - 2g
 
 //	7 segments
-int c0 = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0;
-int sev_seg = 0;
+int aff0 = 0, aff1 = 0, aff2 = 0, aff3 = 0, aff4 = 0, aff5 = 0;
+int aff_7seg = 0;
+int val = 0;
 
 
 int comp2(unsigned int value){
 	if(value & 0x8000){
-		c2 = -(((~value)& 0xFFFF) + 1);
+		val = -(((~value)& 0xFFFF) + 1);
 	}
 	else {
-		c2 = value;
+		val = value;
 	}
 
-	return c2;
+	return val;
 }
 
+//Fonction de lecture de donnée sur le bus I2C
 unsigned int read_data (int reg){
 	I2C_start(OPENCORES_I2C_0_BASE,accel_add,0);      //Start bit + slave address + write
-	I2C_write(OPENCORES_I2C_0_BASE,reg,0);       			//Register
+	I2C_write(OPENCORES_I2C_0_BASE,reg,0);       			//Registre où on va venir lire la donnée
 	I2C_start(OPENCORES_I2C_0_BASE,accel_add,1);      //Start + slave address + read
 	data =  I2C_read(OPENCORES_I2C_0_BASE,1);             	//Collect last data
 
 	return data;
 }
 
+
+//Fonction de lecture sur chaque axe
 void read_axis(enum axis a){
 	int register0, register1;
 	int DATA0=0, DATA1=0;
@@ -92,30 +96,32 @@ void read_axis(enum axis a){
 	}
 }
 
-void sev_seg_print(int value){
+//Fonction d'affichage sur 7 segments
+void aff_7seg_print(int value){
 	if (value<0){
-		c5 = 10;
-		c4 = -value /10000;
-		c3 = (-value / 1000) % 10;
-		c2 = (-value /100) % 10;
-		c1 = (-value/10) % 10;
-		c0 = -value % 10;
+		aff5 = 10;
+		aff4 = -value /10000;
+		aff3 = (-value / 1000) % 10;
+		aff2 = (-value /100) % 10;
+		aff1 = (-value/10) % 10;
+		aff0 = -value % 10;
 	}
 	else{
-		c5 = 11;
-		c4 = value /10000;
-		c3 = (value / 1000) % 10;
-		c2 = (value /100) % 10;
-		c1 = (value/10) % 10;
-		c0 = value % 10;
+		aff5 = 11;
+		aff4 = value /10000;
+		aff3 = (value / 1000) % 10;
+		aff2 = (value /100) % 10;
+		aff1 = (value/10) % 10;
+		aff0 = value % 10;
 	}
 
-	sev_seg = (c5 << 20) + (c4 << 16) +(c3 << 12) + (c2 << 8) + (c1 <<4) + c0;
+	aff_7seg = (aff5 << 20) + (aff4 << 16) +(aff3 << 12) + (aff2 << 8) + (aff1 <<4) + aff0;
 
-	//Write the number on the 7 segment
-	IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE,sev_seg);
+	IOWR_ALTERA_AVALON_PIO_DATA(PIO_0_BASE,aff_7seg);
 }
 
+
+//Fonction de calcul sur chaque axe
 void axis_calc(enum axis a, unsigned int value0, unsigned int value1){
 	int data_unsigned = 0, data_signed = 0, data = 0;
 
@@ -123,7 +129,8 @@ void axis_calc(enum axis a, unsigned int value0, unsigned int value1){
 
 	data_signed = comp2(data_unsigned);
 
-	data = (1000 * data_signed * g_range_settings) / 32767;
+	//conversion en mili g
+	data = round(data_signed*4);
 
 	if (a == X_axis){
 		x_unsigned = data_unsigned;
@@ -145,6 +152,7 @@ void axis_calc(enum axis a, unsigned int value0, unsigned int value1){
 	}
 }
 
+//Fonction de communication en UART
 void UART_print(enum axis a){
 	if (a == X_axis){
 		printf("x_unsigned : %d\t\t", x_unsigned);
@@ -174,24 +182,24 @@ int main(int argc, char *argv[])
     data = I2C_start(OPENCORES_I2C_0_BASE,accel_add,0);
 
     while(1){
-		//Read the ADXL345 value
+		//Lecture de la valeur de l'accéléromètre
         read_axis(X_axis);   
         read_axis(Y_axis); 
         read_axis(Z_axis);        
 
-        //Calculate the 2 complement and value in m/s²
+		//Calcul du complément à 2 et de la valeur en mm/s²
         axis_calc(X_axis, DATAX0, DATAX1);
         axis_calc(Y_axis, DATAY0, DATAY1);
         axis_calc(Z_axis, DATAZ0, DATAZ1);
 
-		//Print the values via UART
+		//affichage valeurs sur UART
 		UART_print(X_axis);
 		UART_print(Y_axis);
 		UART_print(Z_axis);
 		printf("\n");
 
-		//Print on the 7 segments
-		sev_seg_print(x_signed);
+		//Affichage sur 7 segments
+		aff_7seg_print(x_signed);
 
         usleep(250000);
 	}

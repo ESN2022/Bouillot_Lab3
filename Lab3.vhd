@@ -7,13 +7,8 @@ entity lab3 is
    port(
       clk	  			: in  std_logic;
       reset	  			: in  std_logic;
-		push_b			: in std_logic;
-		output0 			: out std_logic_vector(7 downto 0);
-		output1 			: out std_logic_vector(7 downto 0);
-		output2 			: out std_logic_vector(7 downto 0);
-		output3 			: out std_logic_vector(7 downto 0);
-		output4 			: out std_logic_vector(7 downto 0);
-		output5 			: out std_logic_vector(7 downto 0);
+		button			: in std_logic;
+		output_seg		: out std_logic_vector(47 downto 0);
 		GSENSOR_CS_n 	: out std_logic;			--active at low level
 		GSENSOR_SDO 	: out std_logic;
 		i2c_SDA 			: inout std_logic ;
@@ -54,44 +49,44 @@ begin
 				opencores_i2c_0_export_0_scl_pad_io => i2c_SCL,
 				opencores_i2c_0_export_0_sda_pad_io => i2c_SDA,
             pio_0_external_connection_export 	=> in_signal,
-				pio_1_external_connection_export    => push_b,
+				pio_1_external_connection_export    => button,
             reset_reset_n                    	=> reset
     );
 
 	u1: component bin_to_7seg
 	port map (
 		input                          	=> in_signal(3 downto 0),                         
-		output 									=> output0                
+		output 									=> output_seg(7 downto 0)               
   );
 
    u2: component bin_to_7seg
 	port map (
 		input                          	=> in_signal(7 downto 4),                         
-		output 									=> output1                  
+		output 									=> output_seg(15 downto 8)                  
   );
 
    u3: component bin_to_7seg
 	port map (
 		input                          	=> in_signal(11 downto 8),                         
-		output 									=> output2                  
+		output 									=> output_seg(23 downto 16)                  
   );
 
   	u4: component bin_to_7seg
 	port map (
 		input                          	=> in_signal(15 downto 12),                         
-		output 									=> output3                  
+		output 									=> output_seg(31 downto 24)                  
   );
 
    u5: component bin_to_7seg
 	port map (
 		input                          	=> in_signal(19 downto 16),                         
-		output 									=> output4                  
+		output 									=> output_seg(39 downto 32)                  
   );
 
    u6: component bin_to_7seg
 	port map (
 		input                          	=> in_signal(23 downto 20),                         
-		output 									=> output5                  
+		output 									=> output_seg(47 downto 40)                  
   );
 
 
