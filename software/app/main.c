@@ -236,13 +236,6 @@ void UART_print(enum axis a){
 	}
 }
 
-//Fonction permettant de voir les registres d'offset
-void offset_print(){
-	alt_printf("X offset: %x\t;",read_data(ACCEL_OFSX));
-    alt_printf("\tY offset: %x\t",read_data(ACCEL_OFSY));
-    alt_printf("\tZ offset: %x\n",read_data(ACCEL_OFSZ));
-}
-
 //Fonction d'affichage sur les afficheurs 7 segments
 void aff_7seg_print(int value){
 	if (value<0){
@@ -273,7 +266,7 @@ int main(int argc, char *argv[])
     I2C_init(OPENCORES_I2C_0_BASE,ALT_CPU_CPU_FREQ,100000);
 
 	//Search ADXL345
-    chip_adress = I2C_start(OPENCORES_I2C_0_BASE,ACCEL_address,0);
+    chip_adress = I2C_start(OPENCORES_I2C_0_BASE,ACCEL_address,1);
     if ( chip_adress == 0){
         alt_printf("ADXL345 found at the address : 0x%x\n", ACCEL_address);
     }
@@ -290,11 +283,9 @@ int main(int argc, char *argv[])
 	
 	
 	//Mise a niveau des axes
-	offset_print();
     set_offset(X_axis, X_offset);
     set_offset(Y_axis, Y_offset);
     set_offset(Z_axis, Z_offset);
-    offset_print();
 
 
     while(1){

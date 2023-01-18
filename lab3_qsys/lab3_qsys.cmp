@@ -1,0 +1,11 @@
+	component lab3_qsys is
+		port (
+			clk_clk                             : in    std_logic                     := 'X'; -- clk
+			opencores_i2c_0_export_0_scl_pad_io : inout std_logic                     := 'X'; -- scl_pad_io
+			opencores_i2c_0_export_0_sda_pad_io : inout std_logic                     := 'X'; -- sda_pad_io
+			pio_0_external_connection_export    : out   std_logic_vector(23 downto 0);        -- export
+			pio_1_external_connection_export    : in    std_logic                     := 'X'; -- export
+			reset_reset_n                       : in    std_logic                     := 'X'  -- reset_n
+		);
+	end component lab3_qsys;
+
