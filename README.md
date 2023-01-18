@@ -44,14 +44,13 @@ La première étape était donc de voir si la connection I2C était paramétrée
 
 Je viens alors implanter différentes fonctions (en langage C) comme présenté dans le découpage de la partie logicielle. Les pièges à faire attention viennent principalement de la gestion des valeurs non signée, signée et converties en mili g. Pour cela il faut donc être très rigoureux, d'où l'intérêt de bien découper les différentes fonctionnalités dans plusieurs fonctions.
 
-Aussi,communication est gérée par l’IP opencoresi2c. Les fonctions essentielles sont donc décrite dans le fichier .h de l'IP.
-L’initialisation de la communication : void I2C_init(alt_u32 base,alt_u32 clk,alt_u32 speed),
--	L’initialisation de la communication : void I2C_init(alt_u32 base,alt_u32 clk,alt_u32 speed),
--	Le bit de start ainsi que le registre et le write bit: int I2C_start(alt_u32 base, alt_u32 add, alt_u32 read),
--	La lecture : alt_u32 I2C_read(alt_u32 base,alt_u32 last),
--	L’écriture : alt_u32 I2C_write(alt_u32 base,alt_u8 data, alt_u32 last).
+Aussi, la communication entre l'accéléromètre et le Nios est réalisée par l'IP opencorei2c. Ses fonctions sont décrite dans le header (.h) de l'IP. On retrouve alors :
+ - L'initialisation de la communication via void I2C_init(alt_u32 base,alt_u32 clk,alt_u32 speed),
+ - Le bit de start, le registre et le bit d'écriture via int I2C_start(alt_u32 base, alt_u32 add, alt_u32 read),
+ - La lecture via la maccro alt_u32 I2C_read(alt_u32 base,alt_u32 last),
+ - L'écriture via la maccro alt_u32 I2C_write(alt_u32 base,alt_u8 data, alt_u32 last).
 
-Cette partie s'appuie principalement sur la fonction nommée read_axis qui permet la lecture des deux registres d'un des 3 axes. Cette fonction fait appel à une seconde fonction dédiée à la lecture sur le bus I2C (read_data) sur un seul octet. Enfin la dernière fonction nommée axis_calc permet de réaliser toutes les opérations de conversions, à savoir :
+Enfin, cette partie s'appuie principalement sur la fonction nommée read_axis qui permet la lecture des deux registres d'un des 3 axes. Cette fonction fait appel à une seconde fonction dédiée à la lecture sur le bus I2C (read_data) sur un seul octet. Enfin la dernière fonction nommée axis_calc permet de réaliser toutes les opérations de conversions, à savoir :
  - Concaténation des valeurs provenant des deux registres LSB et MSB d'un axe
  - Complément à 2 permettant de convertir une valeur signée à partir d'une valeur non signée
 
@@ -60,14 +59,27 @@ Enfin la valeur en mili g est affichée sur les afficheurs 7 segments, toutes le
 ### 3 Conversion en mili g et écriture dans les registres d'offset
 
 Lors de cette partie j'ai ajouté la conversion des axes en mili g via la donnée issue de la datasheet, à savoir 4.0 mg/LSB. Je vient maintenant calibrer l'accéléromètre. Pur cela, je lance un terminal nios et j'observe les valeurs envoyées en UART. Comme la carte est posée à plat sur la table, celle-ci n'est soumise qu'à la gravité sur l'axe Z (soit environ 1000 mg sur l'axe Z). Cette situation nous permet donc de calibrer à la fois l'axe X et l'axe Y car ces axes doivent être à 0 g.
-On vient donc faire la moyenne des valeurs envoyées par l'accéléromètre, puis on divise par 15.6 pour obtenir l'offset nécessaire. La division par 15.6 est nécessaire car, selon la datasheet, chaque nombre entré dans les registres d'offset sera multiplié par 15.6. 
+On vient donc faire la moyenne des valeurs envoyées par l'accéléromètre, puis on divise par 15.6 pour obtenir l'offset nécessaire. La division par 15.6 est nécessaire car, selon la datasheet, chaque nombre entré dans les registres d'offset sera multiplié par 15.6 (l'échelle de registre est de 15.6mg/LSB).
 
 Par exemple, sur l'axe X, on voit que l'erreur moyenne est de -32, soit un drift constant de -32/15.6= -2. Il faudra alors écrire 2 dans le registre d'offset de l'axe X.
-Une fois fait pour l'axe X, j'ai fais la même opération pour les axes Y et Z.
 
-### 4- Ajout des interruption
+![image](https://user-images.githubusercontent.com/121939768/213114205-f7cbeef8-e6ac-4d22-b4c7-81ccd93c8f17.png)
 
-Dernière étape est l'ajout des interruptions générée par le timer 0 et le bouton poussoir (PIO 1). Les maccros usleep sont remplacées par les interruptions du timer et le bouton poussoir permet de changer l'axe affiché sur les afficheurs 7 segments.
+Une fois fait pour l'axe X, j'ai fais la même opération pour les axes Y et Z. On peut alors observer que les registres d'offset on bien été mis à jour et l'on observe une erreur moyenne de 6mg sur X, 7mg sur Y et 10mg sur Z ce qui correspond à une erreur d'environ 1% sur la valeur attendue.
+
+![image](https://user-images.githubusercontent.com/121939768/213114968-da66001b-ba1d-4562-8a7d-d670f537a766.png)
+
+
+### 4- Ajout des interruptions
+
+Dernière étape est l'ajout des interruptions générée par le timer 0 et le bouton poussoir (PIO 1). Les maccros usleep sont remplacées par les interruptions du timer et le bouton poussoir permet de changer l'axe affiché sur les afficheurs 7 segments. La vidéo montre alors le choix des axes via le bouton poussoir.
+
+https://user-images.githubusercontent.com/121939768/213115176-10469299-6d0c-465a-b894-b574ef2e79d8.MOV
+
+Cette dernière vidéo montre les valeurs envoyées par l'accéléromètre sur l'axe X :
+
+https://user-images.githubusercontent.com/121939768/213119067-4634cfe8-b997-46c0-beb4-015479e4eedb.mov
+
 
 ## Conclusion, progress and result
 
@@ -77,4 +89,7 @@ Ma progression pour ce troisième lab est la suivante :
   - Lecture des axes et affichage sur les afficheurs 7 segments
   - Conversion en mili g et gestion des offsets
   - Ajout d'interruptions (timer et bouton poussoir)
+  
+Grâce à ce Lab, j'ai pus comprendre et mettre en application la communication en I2C. Les pièges étaient, pour la plupart, liés à l'emplacement d'écriture et de lecture des différentes registres ainsi qu'à la lecture des données provenant du bus I2C.
+Mes résultats ont alors été présentés tout au long de la description de mon architecture et le résultat final est l'affichage de tous les axes en mili g sur les afficheurs 7 segments et la gestion de l'actualisation des données via interruptions générées par le timer.
 
